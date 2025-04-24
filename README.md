@@ -145,3 +145,7 @@ You’ll still only be counted once, and won’t receive a new username.
 - 💻 **Course:** Network Programming
 
 ---
+
+## 📖 Additional Resources
+
+For a deeper understanding of the code and logic used in this project, you can check out the detailed **[Code Explanation](project_files/README.md)** document located in the `project_files` subfolder.
