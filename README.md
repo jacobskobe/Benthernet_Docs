@@ -1,151 +1,117 @@
+# 🧠 Username Registration & Game Service API (ZeroMQ over Benthernet)
 
-# 🧠 Username Registration API (ZeroMQ over Benthernet)
-
-Welcome to the **Username Registration Service** — a simple API that registers a user-provided name and returns a randomly generated username. It's built in C++ using **ZeroMQ** and tested in **Qt Creator 6.8.2**. Communication happens via the **Benthernet** message broker.
+Welcome to the **Username Registration & Game Service** — a C++ API using **ZeroMQ** for messaging over the **Benthernet** broker. This project allows users to register usernames, request passwords, log in, and receive random game suggestions to build a personal game list.
 
 ---
 
 ## ⚙️ Requirements
 
-Before you begin, make sure you have the following:
+Make sure you have:
 
-- ✅ **Qt Creator 6.8.2** (required)
-- ✅ C++17 or later
-- ✅ **No need to install ZeroMQ manually** – all required libraries are **included in the project files**.
-- ✅ Internet connection (Benthernet is a remote broker)
+- ✅ **Qt Creator 6.8.2** (recommended)
+- ✅ C++17 or newer
+- ✅ ZeroMQ libraries included in the project (no manual install needed)
+- ✅ Internet connection (Benthernet is a remote message broker)
 
-> 📦 **ZeroMQ and all required libraries are already bundled** with the project. You can clone and run the project right away.
+> All libraries are bundled for quick setup.
 
 ---
 
-## 🏗️ Project Setup
+## 🏗️ Setup & Build Instructions
 
-1. **Download or clone the project folder**.
-2. Open the `.pro` file (for both client and server) in **Qt Creator 6.8.2**.
-3. Wait for Qt to auto-detect the kits and configure everything.
-4. Build the project using the green **"Run"** button.
-
-> ⚠️ The **client and server** are separate apps and **must be run in separate terminals or windows**.
+1. Clone or download the project repository.
+2. Open the `.pro` files for both **client** and **server** in Qt Creator 6.8.2.
+3. Let Qt configure the project automatically.
+4. Build both projects.
+5. Run the **server** and **client** in separate terminal windows or Qt instances.
 
 ---
 
 ## 🚀 Running the Application
 
-### 🖥️ Step 1: Run the Server
+### Server
 
-1. Open the **server-side project** in Qt.
-2. Build and run it.
-3. Terminal will print:  
-   ```
-   Service actief: wacht op subscribers...
-   ```
-4. The server is now listening for incoming client messages.
+- Starts and waits for client subscriptions.
+- Handles username registrations, password generation, login validation, and game suggestions.
 
----
+### Client
 
-### 👤 Step 2: Run the Client
-
-1. Open the **client-side project** in a new Qt window.
-2. Edit your name in the following line:
-   ```cpp
-   std::string naam = "Your Name Here";
-   ```
-3. Build and run.
-4. Terminal will print something like:
-   ```
-   Verzonden: service>username?>Your Name Here>
-   Ontvangen reactie: service>username!>Your Name Here>je bent geregistreerd als: User_AbC123xy>
-   ```
+- Allows users to:
+  - Register with a username and channel.
+  - Request a password.
+  - Log in with credentials.
+  - Receive and optionally save random game recommendations.
 
 ---
 
-## 🔄 Message Format
+## 🔄 Communication Protocol
 
-### ➡️ Client → Server
+### Message Patterns
 
-```text
-service>username?>{your name}>
-```
+- Client sends requests over **PUSH** socket.
+- Server listens and responds over **SUB** socket.
+- Responses from server use **PUSH** → client listens on **SUB** socket.
 
-| Field          | Description             |
-|----------------|-------------------------|
-| `{your name}`  | Your chosen display name |
+### Message Formats
 
----
+| Direction       | Format                                               | Description                         |
+|-----------------|-----------------------------------------------------|-----------------------------------|
+| Client → Server | `service>username?>username|channel`                | Register username                 |
+| Client → Server | `service>password?>username|length`                  | Request password of given length  |
+| Client → Server | `service>login?>username|password`                   | Request login authentication      |
+| Client → Server | `service>game?>username|channel`                     | Request random game               |
 
-### ⬅️ Server → Client
-
-```text
-service>username!>{your name}>je bent geregistreerd als: {generated_username}>
-```
-
-| Field                   | Description                             |
-|-------------------------|-----------------------------------------|
-| `{your name}`           | Matches the name you submitted          |
-| `{generated_username}`  | Random system-generated identifier      |
-
----
-
-## 🧠 How It Works
-
-- The client sends a message via **PUSH** socket to register a name.
-- The server listens via a **SUB** socket for messages like:
-  ```text
-  service>username?>John Doe>
-  ```
-- If the name is new:
-  - It generates a random username like `User_X8r1Tz7p`
-  - Sends it back to the client using **PUSH** → **SUB**
-- The client receives this via its **SUB** socket and prints it.
+| Server → Client | Format                                              | Description                      |
+|----------------|-----------------------------------------------------|---------------------------------|
+| Server → Client | `service>username!>username|channel>confirmation`   | Username registration confirmation |
+| Server → Client | `service>password!>username>Je wachtwoord is: <pw>`| Password response                |
+| Server → Client | `service>login!>username>Succesvol ingelogd`       | Login success                   |
+| Server → Client | `service>game!>username|channel>Random game is: <game>` | Random game suggestion        |
 
 ---
 
-## ✨ Features
+## 🧩 Features
 
-- ✅ One-time registration check (avoids duplicates)
-- ✅ Random username generation
-- ✅ Terminal logging for easy debugging
-- ✅ Clean ZeroMQ pattern usage: PUSH + SUB
-
----
-
-## 📦 Demo Output
-
-### 📤 Client Output
-```text
-Verzonden: service>username?>Kobe Jacobs>
-Ontvangen reactie: service>username!>Kobe Jacobs>je bent geregistreerd als: User_x7FQ2t8p>
-```
-
-### 📥 Server Output
-```text
-Verstuur bericht naar client: service>username!>Kobe Jacobs>je bent geregistreerd als: User_x7FQ2t8p>
-Nieuwe subscriber: Kobe Jacobs (#1), gegeven gebruikersnaam: User_x7FQ2t8p
-```
+- User registration with unique usernames per channel.
+- Password generation with customizable length.
+- Login authentication.
+- Random game suggestions.
+- User-managed list of games to play later.
+- Saves game lists locally in `games.txt`.
 
 ---
 
-## 🙋 Frequently Asked Questions
+## 💻 Usage Overview
 
-**Q: Can I run both client and server on one PC?**  
-Yes! Just open two separate Qt instances or terminal windows and run both apps.
-
-**Q: Will everyone get a different username?**  
-Yes, usernames are generated randomly per registration.
-
-**Q: What if I register the same name twice?**  
-You’ll still only be counted once, and won’t receive a new username.
+1. Register your username with a channel.
+2. Request a password (minimum length 10).
+3. Log in using your username and password.
+4. Request random games and choose whether to save them.
+5. View your saved games list.
+6. Log out or exit the application.
 
 ---
 
-## 🧑‍🏫 Project Info
+## 🙋 FAQ
 
-- 📚 **Project by:** Kobe Jacobs  
-- 🏫 **School:** PXL University of Applied Sciences and Arts  
-- 💻 **Course:** Network Programming
+**Can I run client and server on the same machine?**  
+Yes, just use separate terminals or Qt instances.
+
+**Are usernames unique per channel?**  
+Yes, usernames are registered per channel to avoid duplicates.
+
+**How do I save games I like?**  
+After receiving a random game, confirm saving it to your local list.
 
 ---
 
-## 📖 Additional Resources
+## 🧑‍🏫 About
 
-For a deeper understanding of the code and logic used in this project, you can check out the detailed **[Code Explanation](project_files/README.md)** document located in the `project_files` subfolder.
+- Developed by: Kobe Jacobs  
+- PXL University of Applied Sciences and Arts  
+- Network Programming Course  
+
+---
+
+For detailed code explanations and more, check the project files.
+

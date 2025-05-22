@@ -17,40 +17,40 @@ This section breaks down the implementation of both the **client** and **server*
 #include <unistd.h>
 #else
 #include <windows.h>
-#define sleep(n)    Sleep(n)
+#define sleep(n) Sleep(n)
 #endif
 ```
-This block sets up includes and cross-platform compatibility for the `sleep()` function.
+This block includes essential headers and handles cross-platform compatibility for the `sleep()` function.
 
 ```cpp
 zmq::context_t context{1};
 ```
-Creates a ZeroMQ context that manages sockets.
+Creates a ZeroMQ context, which manages the sockets used for messaging.
 
 ```cpp
 zmq::socket_t push_socket{context, zmq::socket_type::push};
 push_socket.connect("tcp://benternet.pxl-ea-ict.be:24041");
 ```
-Connects to the server with a **PUSH** socket for sending requests.
+Initializes and connects a **PUSH** socket to send requests to the Benthernet server.
 
 ```cpp
 zmq::socket_t sub_socket{context, zmq::socket_type::sub};
 sub_socket.connect("tcp://benternet.pxl-ea-ict.be:24042");
 ```
-Sets up a **SUB** socket to listen for responses.
+Sets up a **SUB** socket to subscribe and listen for server responses.
 
 ```cpp
 std::string naam = "Kobe Jacobs";
 std::string sub_topic = "service>username!>" + naam + ">";
 sub_socket.setsockopt(ZMQ_SUBSCRIBE, sub_topic.c_str(), sub_topic.length());
 ```
-Subscribes to a topic specifically for receiving a personalized username.
+Subscribes to a topic tailored to the username, ensuring the client only receives relevant messages.
 
 ```cpp
 std::string push_message = "service>username?>" + naam + ">";
 push_socket.send(push_message.c_str(), push_message.length(), 0);
 ```
-Sends a request to the server asking to register the user.
+Sends a username registration request to the server.
 
 ```cpp
 while (true) {
@@ -62,7 +62,7 @@ while (true) {
     std::cout << "Ontvangen reactie: " << antwoord << std::endl;
 }
 ```
-The loop listens for responses and prints them out.
+Continuously listens for server responses and outputs them to the console.
 
 ---
 
@@ -77,22 +77,22 @@ The loop listens for responses and prints them out.
 #include <unordered_set>
 #include <ctime>
 ```
-Includes required headers. `unordered_set` is used to keep track of registered names.
+Includes necessary headers; `unordered_set` helps track registered usernames to prevent duplicates.
 
 ```cpp
 std::string extract_name(const std::string& message) { ... }
 ```
-Extracts the user's name from the incoming request message.
+Extracts the username from incoming client requests.
 
 ```cpp
 std::string generate_random_username() { ... }
 ```
-Generates a unique random username using alphanumeric characters.
+Generates a unique, random username with alphanumeric characters.
 
 ```cpp
 zmq::context_t context{1};
 ```
-ZeroMQ context object for managing communication.
+Creates a ZeroMQ context for socket management.
 
 ```cpp
 zmq::socket_t push_socket{context, zmq::socket_type::push};
@@ -101,18 +101,18 @@ push_socket.connect("tcp://benternet.pxl-ea-ict.be:24041");
 zmq::socket_t sub_socket{context, zmq::socket_type::sub};
 sub_socket.connect("tcp://benternet.pxl-ea-ict.be:24042");
 ```
-Both sockets are connected (client-side) to receive and respond to messages.
+Both sockets connect to the Benthernet endpoints: **PUSH** to send replies, **SUB** to receive client requests.
 
 ```cpp
 std::string topic = "service>username?>";
 sub_socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.length());
 ```
-Server listens for all requests to the `username` service.
+Subscribes to all username registration requests.
 
 ```cpp
 std::unordered_set<std::string> geregistreerde_namen;
 ```
-Maintains a set of already registered names to prevent duplicate logging.
+Keeps a set of registered usernames to avoid duplicates.
 
 ```cpp
 while (true) {
@@ -131,12 +131,13 @@ while (true) {
     push_socket.send(antwoord.c_str(), antwoord.length(), 0);
 }
 ```
-The main loop processes each incoming request, generates a response, and sends it back.
+The main server loop listens for requests, processes them by generating a username, stores the name, and sends back confirmation.
 
 ---
 
 ## 🔧 Additional Notes
-- The project uses ZeroMQ for async communication.
-- Topics are structured like a pub-sub service (`username?>` for requests, `username!>` for responses).
-- All names are encoded into the message to allow personalized responses.
 
+- The project uses **ZeroMQ** for asynchronous communication.
+- Message topics follow a pub-sub pattern: requests end with `?>`, responses with `!>`.
+- Personalization is achieved by encoding usernames in the message topics.
+- This design supports scalability and multiple concurrent clients.
